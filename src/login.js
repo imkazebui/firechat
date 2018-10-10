@@ -4,26 +4,42 @@ import styled from "styled-components";
 export default class Login extends React.Component {
   render() {
     return (
-      <div>
-        <div>
+      <Wrapp>
+        <Content>
           <p>FireChat</p>
-          <FCButton text="Login with Facebook" />
-          <FCButton text="Login with Google" />
-        </div>
-        <p>Or</p>
-        <FCInput icon="fa fa-user-circle" placeholder="Username" />
-        <FCInput icon="fa fa-unlock" placeholder="Password" />
-        <FCButton text="Login " />
-        <p>Create an account</p>
-        <p>Forgot password</p>
-      </div>
+          <FCButton text="Login with Facebook" background="#2962FF" fullWidth />
+          <FCButton text="Login with Google" fullWidth />
+          <p>Or</p>
+          <FCInput icon="fa fa-user-circle" placeholder="Username" />
+          <FCInput icon="fa fa-unlock" placeholder="Password" />
+          <FCButton text="Login " background="#1DE9B6" fullWidth />
+          <p>Create an account</p>
+          <p>Forgot password</p>
+        </Content>
+      </Wrapp>
     );
   }
 }
 
-function FCButton({ text }) {
+const Wrapp = styled.div`
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e9e9e9;
+`;
+const Content = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid #bfbfbf;
+  background: white;
+  box-shadow: 0px 0px 10px 5px #aaaaaa;
+`;
+
+function FCButton({ text, background = "#f44336", fullWidth = false }) {
   return (
-    <WrappButton>
+    <WrappButton background={background} fullWidth={fullWidth}>
       <div>{text}</div>
     </WrappButton>
   );
@@ -34,9 +50,10 @@ const WrappButton = styled.div`
 
   div {
     padding: 5px 20px;
-    background: #f44336;
+    background: ${({ background }) => background};
     border-radius: 20px;
     color: white;
+    width: ${({ fullWidth }) => (fullWidth ? "100%" : "auto")};
   }
 `;
 
