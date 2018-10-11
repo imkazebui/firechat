@@ -1,14 +1,35 @@
 import React from "react";
 import styled from "styled-components";
 
+import { firebaseApp, googleProvider } from "./firebase-config";
+
 export default class Login extends React.Component {
+  authWithGG = () => {
+    googleProvider.addScope("profile");
+    googleProvider.addScope("email");
+    firebaseApp
+      .auth()
+      .signInWithPopup(googleProvider)
+      .then(result => {
+        console.log("result auth", result);
+        console.log("user", result.user);
+      })
+      .catch(err => {
+        console.log("err auth", err);
+      });
+  };
+
   render() {
     return (
       <Wrapp>
         <Content>
           <p>FireChat</p>
           <FCButton text="Login with Facebook" background="#2962FF" fullWidth />
-          <FCButton text="Login with Google" fullWidth />
+          <FCButton
+            text="Login with Google"
+            fullWidth
+            onClick={this.authWithGG}
+          />
           <p>Or</p>
           <FCInput icon="fa fa-user-circle" placeholder="Username" />
           <FCInput icon="fa fa-unlock" placeholder="Password" />
@@ -37,10 +58,15 @@ const Content = styled.div`
   box-shadow: 0px 0px 10px 5px #aaaaaa;
 `;
 
-function FCButton({ text, background = "#f44336", fullWidth = false }) {
+function FCButton({
+  text,
+  background = "#f44336",
+  fullWidth = false,
+  onClick = () => {}
+}) {
   return (
     <WrappButton background={background} fullWidth={fullWidth}>
-      <div>{text}</div>
+      <div onClick={onClick}>{text}</div>
     </WrappButton>
   );
 }
@@ -54,6 +80,7 @@ const WrappButton = styled.div`
     border-radius: 20px;
     color: white;
     width: ${({ fullWidth }) => (fullWidth ? "100%" : "auto")};
+    text-align: center;
   }
 `;
 
