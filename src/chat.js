@@ -1,85 +1,127 @@
 import React from "react";
 import styled from "styled-components";
 
+import { firebaseAuth, firebaseApp } from "./firebase-config";
+
 export default class Chat extends React.Component {
+  state = {
+    userName: "",
+    photoUrl: ""
+  };
+
+  signOut = () => firebaseAuth.signOut();
+
   render() {
+    const { userName, photoUrl } = this.state;
     return (
       <Wrapper>
-        <LeftContent>
-          <WrappUser>
-            <Avatar
-              src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-              alt="avatar"
-            />
-            <p>Phuong Bui</p>
-          </WrappUser>
-          <WrappSearch>
-            <i className="fa fa-search" />
-            <Input placeholder="search" />
-            <i className="fa fa-plus-circle " />
-          </WrappSearch>
-          <ListConversation>
-            <Conversation>
-              <ConversationAvatar>
+        <Header>
+          <div />
+          <div>
+            <h3>FireChat</h3>
+          </div>
+          <div className="wrapp-user">
+            <Avatar src={photoUrl} alt="avatar" />
+            <p>{userName}</p>
+            <p onClick={this.signOut}>SIGN-OUT</p>
+          </div>
+        </Header>
+        <Body>
+          <LeftContent>
+            <WrappSearch>
+              <i className="fa fa-search" />
+              <Input placeholder="search" />
+              <i className="fa fa-plus-circle " />
+            </WrappSearch>
+            <ListConversation>
+              <Conversation>
+                <ConversationAvatar>
+                  <Avatar
+                    src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
+                    alt="avatar"
+                  />
+                </ConversationAvatar>
+                <ConversationBody>
+                  <ConversationTitle>Phuong Bui</ConversationTitle>
+                  <ConversationText>Cái ông bà già</ConversationText>
+                </ConversationBody>
+              </Conversation>
+            </ListConversation>
+          </LeftContent>
+          <RightContent>
+            <ChatHeader>
+              <ChatHeaderLeft>
                 <Avatar
                   src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
                   alt="avatar"
                 />
-              </ConversationAvatar>
-              <ConversationBody>
-                <ConversationTitle>Phuong Bui</ConversationTitle>
-                <ConversationText>Cái ông bà già</ConversationText>
-              </ConversationBody>
-            </Conversation>
-          </ListConversation>
-        </LeftContent>
-        <RightContent>
-          <ChatHeader>
-            <ChatHeaderLeft>
-              <Avatar
-                src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-                alt="avatar"
-              />
-              <p>Phuong Bui</p>
-            </ChatHeaderLeft>
-            <ChatHeaderRight>
-              <i className="fa fa-comment" />
+                <p>Phuong Bui</p>
+              </ChatHeaderLeft>
+              <ChatHeaderRight>
+                <i className="fa fa-comment" />
 
-              <i className="fa fa-camera" />
-              <i className="fa fa-phone" />
-            </ChatHeaderRight>
-          </ChatHeader>
-          <ChatContent>
-            <WrappOtherMessage>
-              <Avatar
-                src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-                alt="avatar"
-              />
-              <Message>Hello baby</Message>
-            </WrappOtherMessage>
-            <WrappMyMessage>
-              <Message>Hello baby</Message>
+                <i className="fa fa-camera" />
+                <i className="fa fa-phone" />
+              </ChatHeaderRight>
+            </ChatHeader>
+            <ChatContent>
+              <WrappOtherMessage>
+                <Avatar
+                  src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
+                  alt="avatar"
+                />
+                <Message>Hello baby</Message>
+              </WrappOtherMessage>
+              <WrappMyMessage>
+                <Message>Hello baby</Message>
 
-              <Avatar
-                src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-                alt="avatar"
-              />
-            </WrappMyMessage>
-          </ChatContent>
-          <ChatFooter>
-            <Input placeholder="Write a message" />
-            <i className="fa fa-microphone" />
-            <i className="fa fa-id-card" />
-          </ChatFooter>
-        </RightContent>
+                <Avatar
+                  src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
+                  alt="avatar"
+                />
+              </WrappMyMessage>
+            </ChatContent>
+            <ChatFooter>
+              <Input placeholder="Write a message" />
+              <i className="fa fa-microphone" />
+              <i className="fa fa-id-card" />
+            </ChatFooter>
+          </RightContent>
+        </Body>
       </Wrapper>
     );
   }
 }
 
+const Header = styled.div`
+  height: 70px;
+  color: #fafafa;
+  background: #2979ff;
+  display: flex;
+  padding: 0 20px;
+  div {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wrapp-user {
+    justify-content: flex-end;
+    p {
+      margin-left: 16px;
+    }
+  }
+`;
+const Body = styled.div`
+  display: flex;
+  flex: 1;
+`;
+
 const Wrapper = styled.div`
   height: -webkit-fill-available;
   display: flex;
+  flex-direction: column;
 `;
 const LeftContent = styled.div`
   display: flex;
@@ -87,9 +129,7 @@ const LeftContent = styled.div`
   flex-direction: column;
   border-right: 1px solid #e3e3e3;
 `;
-const WrappUser = styled.div`
-  text-align: center;
-`;
+
 const Avatar = styled.img`
   border-radius: 50%;
   width: 50px;
