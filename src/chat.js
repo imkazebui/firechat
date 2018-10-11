@@ -49,7 +49,23 @@ export default class Chat extends React.Component {
               <i className="fa fa-phone" />
             </ChatHeaderRight>
           </ChatHeader>
-          <ChatContent>ChatContent</ChatContent>
+          <ChatContent>
+            <WrappOtherMessage>
+              <Avatar
+                src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
+                alt="avatar"
+              />
+              <Message>Hello baby</Message>
+            </WrappOtherMessage>
+            <WrappMyMessage>
+              <Message>Hello baby</Message>
+
+              <Avatar
+                src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
+                alt="avatar"
+              />
+            </WrappMyMessage>
+          </ChatContent>
           <ChatFooter>
             <Input placeholder="Write a message" />
             <i className="fa fa-microphone" />
@@ -138,6 +154,52 @@ const ChatHeaderRight = styled.div`
 const ChatContent = styled.div`
   flex: 1;
   padding: 0 20px;
+`;
+const WrappOtherMessage = styled.div`
+  display: flex;
+  div::before {
+    position: absolute;
+    content: "";
+    width: 0;
+    height: 0;
+    top: 19px;
+    left: -6px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-right: 6px solid #e0e0e0;
+    clear: both;
+  }
+  div {
+    background: #e0e0e0;
+    color: #424242;
+  }
+`;
+const WrappMyMessage = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  div::before {
+    position: absolute;
+    content: "";
+    width: 0;
+    height: 0;
+    top: 19px;
+    right: -6px;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 6px solid #651fff;
+    clear: both;
+  }
+  div {
+    background: #651fff;
+    color: #fafafa;
+  }
+`;
+const Message = styled.div`
+  padding: 16px;
+
+  border-radius: 5px;
+  position: relative;
+  margin: 0 20px;
 `;
 const ChatFooter = styled.div`
   display: flex;
