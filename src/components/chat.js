@@ -30,7 +30,7 @@ class Chat extends React.Component {
           <LeftContent>
             <WrappSearch>
               <i className="fa fa-search" />
-              <Input placeholder="search" />
+              <Input placeholder="join a room" />
               <i className="fa fa-plus-circle " />
             </WrappSearch>
             <ListConversation>
@@ -114,6 +114,9 @@ const Header = styled.div`
     justify-content: flex-end;
     p {
       margin-left: 16px;
+      &:hover {
+        cursor: pointer;
+      }
     }
   }
 `;
@@ -132,6 +135,7 @@ const LeftContent = styled.div`
   width: 30%;
   flex-direction: column;
   border-right: 1px solid #e3e3e3;
+  padding-top: 20px;
 `;
 
 const Avatar = styled.img`
@@ -179,6 +183,7 @@ const RightContent = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1;
+  padding-top: 20px;
 `;
 const ChatHeader = styled.div`
   display: flex;
