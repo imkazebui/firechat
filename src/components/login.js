@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-import { firebaseApp, googleProvider } from "./firebase-config";
+import { firebaseApp, googleProvider } from "../firebase-config";
 
 export default class Login extends React.Component {
   authWithGG = () => {
@@ -11,8 +11,8 @@ export default class Login extends React.Component {
       .auth()
       .signInWithPopup(googleProvider)
       .then(result => {
-        console.log("result auth", result);
-        console.log("user", result.user);
+        // console.log("result auth", result);
+        // console.log("user", result.user);
       })
       .catch(err => {
         console.log("err auth", err);

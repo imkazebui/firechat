@@ -1,18 +1,18 @@
 import React from "react";
 import styled from "styled-components";
+import { connect } from "react-redux";
 
-import { firebaseAuth, firebaseApp } from "./firebase-config";
+import { firebaseAuth, firebaseApp } from "../firebase-config";
 
-export default class Chat extends React.Component {
-  state = {
-    userName: "",
-    photoUrl: ""
-  };
-
+class Chat extends React.Component {
   signOut = () => firebaseAuth.signOut();
 
   render() {
-    const { userName, photoUrl } = this.state;
+    const { info = {}, isLogin } = this.props.app;
+    const { userName, photoUrl } = info;
+    if (!isLogin) {
+      return (window.location.href = "#");
+    }
     return (
       <Wrapper>
         <Header>
@@ -92,6 +92,10 @@ export default class Chat extends React.Component {
     );
   }
 }
+
+export default connect(({ app }) => ({
+  app
+}))(Chat);
 
 const Header = styled.div`
   height: 70px;

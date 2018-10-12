@@ -1,25 +1,33 @@
 import React, { Component } from "react";
-import { BrowserRouter, Route } from "react-router-dom";
+
+import { HashRouter, Route } from "react-router-dom";
+import { connect } from "react-redux";
 
 import { firebaseAuth, firebaseApp } from "./firebase-config";
-import Login from "./login";
-import Chat from "./chat";
+import Login from "./components/login";
+import Chat from "./components/chat";
 
-import "font-awesome/css/font-awesome.min.css";
+import { loginAction, logoutAction } from "./redux/action";
 
 class App extends Component {
   componentDidMount() {
+    const { dispatch } = this.props;
+
     firebaseAuth.onAuthStateChanged(user => {
       if (user) {
-        console.log("fire", firebaseApp.auth().currentUser);
+        window.location.href = "#/chat";
         const currentUser = firebaseAuth.currentUser;
         if (!!currentUser) {
-          this.setState({
-            userName: currentUser.displayName,
-            photoUrl: currentUser.photoURL
-          });
+          dispatch(
+            loginAction({
+              userName: currentUser.displayName,
+              photoUrl: currentUser.photoURL
+            })
+          );
         }
       } else {
+        window.location.href = "#";
+        dispatch(logoutAction());
         console.log("log out");
       }
     });
@@ -27,14 +35,17 @@ class App extends Component {
 
   render() {
     return (
-      <BrowserRouter>
+      <HashRouter>
         <div>
           <Route exact path="/" component={Login} />
           <Route path="/chat" component={Chat} />
         </div>
-      </BrowserRouter>
+      </HashRouter>
     );
   }
 }
 
-export default App;
+export default connect(
+  null,
+  dispatch => ({ dispatch })
+)(App);
