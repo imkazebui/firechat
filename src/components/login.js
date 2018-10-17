@@ -18,7 +18,7 @@ export default class Login extends React.Component {
             database.ref(`users/${user.uid}`).set({
               name: user.displayName,
               email: user.email,
-              rooms: []
+              rooms: {}
             });
           }
         });

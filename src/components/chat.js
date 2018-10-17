@@ -7,30 +7,58 @@ import { firebaseAuth, firebaseApp, database } from "../firebase-config";
 class Chat extends React.Component {
   state = { roomName: "" };
 
-  onChangeName = ({ target }) => this.setState({ roomName: target.name });
+  changeRoomName = ({ target }) => this.setState({ roomName: target.value });
 
   signOut = () => firebaseAuth.signOut();
 
-  createRoom = name => {
-    const { uid } = this.props.app;
-    const newRoomKey = database
-      .ref()
-      .child("rooms")
-      .push().key;
+  createRoom = e => {
+    const { roomName } = this.state;
+    const { uid } = this.props.app.info;
 
-    let updates = {
-      [`/rooms/${newRoomKey}`]: {
-        members: [uid],
-        name,
-        lastMessageSent: ""
-      }
-    };
+    database
+      .ref("rooms")
+      .orderByChild("name")
+      .equalTo(roomName)
+      .once("value", snapshot => {
+        const data = snapshot.val();
 
-    database.ref().update(updates);
+        if (!data) {
+          const newRoomId = database
+            .ref()
+            .child("rooms")
+            .push().key;
 
-    database.ref(`users/${uid}`).once("value", snapshot => {
-      let roomOfUser = snapshot.rooms;
-      console.log("room", roomOfUser);
+          let updates = {
+            [`/${newRoomId}`]: {
+              id: newRoomId,
+              members: { [uid]: uid },
+              name: roomName,
+              lastMessageSent: ""
+            }
+          };
+
+          database.ref("/rooms").update(updates);
+
+          this.updateRoomOfUser(newRoomId);
+        } else {
+          console.log("data", data.id);
+          // update member of room
+
+          // update room of user
+          // this.updateRoomOfUser(data.id);
+        }
+      });
+  };
+
+  updateRoomOfUser = roomId => {
+    const { uid } = this.props.app.info;
+
+    database.ref(`users/${uid}`).once("value", dt => {
+      const { rooms = {} } = dt.val();
+
+      let roomOfUser = { ...rooms, [roomId]: roomId };
+
+      database.ref(`/users/${uid}`).update({ rooms: roomOfUser });
     });
   };
 
@@ -41,6 +69,7 @@ class Chat extends React.Component {
     if (!isLogin) {
       return (window.location.href = "#");
     }
+
     return (
       <Wrapper>
         <Header>
