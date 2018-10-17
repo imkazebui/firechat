@@ -2,13 +2,41 @@ import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
 
-import { firebaseAuth, firebaseApp } from "../firebase-config";
+import { firebaseAuth, firebaseApp, database } from "../firebase-config";
 
 class Chat extends React.Component {
+  state = { roomName: "" };
+
+  onChangeName = ({ target }) => this.setState({ roomName: target.name });
+
   signOut = () => firebaseAuth.signOut();
+
+  createRoom = name => {
+    const { uid } = this.props.app;
+    const newRoomKey = database
+      .ref()
+      .child("rooms")
+      .push().key;
+
+    let updates = {
+      [`/rooms/${newRoomKey}`]: {
+        members: [uid],
+        name,
+        lastMessageSent: ""
+      }
+    };
+
+    database.ref().update(updates);
+
+    database.ref(`users/${uid}`).once("value", snapshot => {
+      let roomOfUser = snapshot.rooms;
+      console.log("room", roomOfUser);
+    });
+  };
 
   render() {
     const { info = {}, isLogin } = this.props.app;
+    const { roomName } = this.state;
     const { userName, photoUrl } = info;
     if (!isLogin) {
       return (window.location.href = "#");
@@ -30,8 +58,12 @@ class Chat extends React.Component {
           <LeftContent>
             <WrappSearch>
               <i className="fa fa-search" />
-              <Input placeholder="join a room" />
-              <i className="fa fa-plus-circle " />
+              <Input
+                placeholder="join a room"
+                value={roomName}
+                onChange={this.changeRoomName}
+              />
+              <i className="fa fa-plus-circle " onClick={this.createRoom} />
             </WrappSearch>
             <ListConversation>
               <Conversation>

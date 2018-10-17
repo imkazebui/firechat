@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 
-import { firebaseApp, googleProvider } from "../firebase-config";
+import { firebaseApp, googleProvider, database } from "../firebase-config";
 
 export default class Login extends React.Component {
   authWithGG = () => {
@@ -11,8 +11,17 @@ export default class Login extends React.Component {
       .auth()
       .signInWithPopup(googleProvider)
       .then(result => {
-        // console.log("result auth", result);
-        // console.log("user", result.user);
+        let user = result.user;
+
+        database.ref(`users/${user.uid}`).once("value", snapshot => {
+          if (!snapshot.val()) {
+            database.ref(`users/${user.uid}`).set({
+              name: user.displayName,
+              email: user.email,
+              rooms: []
+            });
+          }
+        });
       })
       .catch(err => {
         console.log("err auth", err);

@@ -17,11 +17,13 @@ class App extends Component {
       if (user) {
         window.location.href = "#/chat";
         const currentUser = firebaseAuth.currentUser;
+
         if (!!currentUser) {
           dispatch(
             loginAction({
               userName: currentUser.displayName,
-              photoUrl: currentUser.photoURL
+              photoUrl: currentUser.photoURL,
+              uid: currentUser.uid
             })
           );
         }
