@@ -7,6 +7,8 @@ import { firebaseAuth, firebaseApp, database } from "../firebase-config";
 class Chat extends React.Component {
   state = { roomName: "" };
 
+  componentDidMount() {}
+
   changeRoomName = ({ target }) => this.setState({ roomName: target.value });
 
   signOut = () => firebaseAuth.signOut();
@@ -42,7 +44,6 @@ class Chat extends React.Component {
           this.updateRoomOfUser(newRoomId);
         } else {
           const dt = Object.entries(data)[0][1];
-          console.log("data", dt);
 
           if (
             Object.keys(dt.members).filter(userId => userId === uid).length ===
@@ -74,6 +75,17 @@ class Chat extends React.Component {
 
       database.ref(`/users/${uid}`).update({ rooms: roomOfUser });
     });
+  };
+
+  getListRoom = () => {
+    const { uid } = this.props.app.info;
+    database
+      .ref(`users/${uid}/rooms`)
+      .limitToFirst(10)
+      .once("value", dt => {
+        const data = dt.val();
+        console.log("get list room", data);
+      });
   };
 
   render() {
