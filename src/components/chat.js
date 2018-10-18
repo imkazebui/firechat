@@ -41,11 +41,25 @@ class Chat extends React.Component {
 
           this.updateRoomOfUser(newRoomId);
         } else {
-          console.log("data", data.id);
-          // update member of room
+          const dt = Object.entries(data)[0][1];
+          console.log("data", dt);
 
-          // update room of user
-          // this.updateRoomOfUser(data.id);
+          if (
+            Object.keys(dt.members).filter(userId => userId === uid).length ===
+            0
+          ) {
+            // update member of room
+            const newMembers = { ...dt.members, [uid]: uid };
+            const newRooms = { ...dt, members: newMembers };
+            const updateRoom = {
+              [`/${dt.id}`]: newRooms
+            };
+
+            database.ref("/rooms").update(updateRoom);
+
+            // update room of user
+            this.updateRoomOfUser(dt.id);
+          }
         }
       });
   };
