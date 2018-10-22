@@ -1,13 +1,16 @@
 import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
+import ReactAvatar from "react-avatar";
 
 import { firebaseAuth, database } from "../firebase-config";
 
 class Chat extends React.Component {
-  state = { roomName: "" };
+  state = { roomName: "", listRoom: [], activeChat: 0 };
 
-  componentDidMount() {}
+  componentDidMount() {
+    this.getListRoom();
+  }
 
   changeRoomName = ({ target }) => this.setState({ roomName: target.value });
 
@@ -84,15 +87,29 @@ class Chat extends React.Component {
       .limitToFirst(10)
       .once("value", dt => {
         const data = dt.val();
-        console.log("get list room", data);
+
+        Object.keys(data).map(roomId => {
+          database
+            .ref("rooms")
+            .orderByChild("id")
+            .equalTo(roomId)
+            .once("value", snapshot => {
+              const data = snapshot.val();
+              if (data) {
+                this.setState(({ listRoom }) => {
+                  listRoom.push({ ...data[roomId] });
+                  return listRoom;
+                });
+              }
+            });
+        });
       });
   };
 
   render() {
     const { info = {}, isLogin } = this.props.app;
-    const { roomName } = this.state;
+    const { roomName, listRoom, activeChat } = this.state;
     const { userName, photoUrl } = info;
-
     return (
       <Wrapper>
         <Header>
@@ -118,18 +135,17 @@ class Chat extends React.Component {
               <i className="fa fa-plus-circle " onClick={this.createRoom} />
             </WrappSearch>
             <ListConversation>
-              <Conversation>
-                <ConversationAvatar>
-                  <Avatar
-                    src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-                    alt="avatar"
-                  />
-                </ConversationAvatar>
-                <ConversationBody>
-                  <ConversationTitle>Phuong Bui</ConversationTitle>
-                  <ConversationText>Cái ông bà già</ConversationText>
-                </ConversationBody>
-              </Conversation>
+              {listRoom.map((room, index) => (
+                <Conversation key={room.id} active={activeChat === index}>
+                  <ConversationAvatar>
+                    <ReactAvatar name={room.name} size={50} round={true} />
+                  </ConversationAvatar>
+                  <ConversationBody>
+                    <ConversationTitle>{room.name}</ConversationTitle>
+                    <ConversationText>{room.lastMessageSent}</ConversationText>
+                  </ConversationBody>
+                </Conversation>
+              ))}
             </ListConversation>
           </LeftContent>
           <RightContent>
@@ -249,11 +265,14 @@ const Input = styled.input`
 `;
 
 const ListConversation = styled.div`
-  padding: 0 20px;
+  padding-top: 10px;
 `;
 const Conversation = styled.div`
   display: flex;
   align-items: center;
+  padding: 0 20px;
+  border-top: 1px solid red;
+  background: ${({ active }) => (active ? "#A7FFEB" : "transparent")};
 `;
 const ConversationAvatar = styled.div`
   margin-right: 15px;
