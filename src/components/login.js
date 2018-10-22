@@ -1,14 +1,24 @@
 import React from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
 
-import { firebaseApp, googleProvider, database } from "../firebase-config";
+import { firebaseAuth, googleProvider, database } from "../firebase-config";
 
-export default class Login extends React.Component {
+class Login extends React.Component {
+  state = {};
+
+  static getDerivedStateFromProps(props, state) {
+    if (props.app.isLogin) {
+      props.history.push("/");
+    }
+
+    return null;
+  }
+
   authWithGG = () => {
     googleProvider.addScope("profile");
     googleProvider.addScope("email");
-    firebaseApp
-      .auth()
+    firebaseAuth
       .signInWithPopup(googleProvider)
       .then(result => {
         let user = result.user;
@@ -51,6 +61,10 @@ export default class Login extends React.Component {
     );
   }
 }
+
+export default connect(({ app }) => ({
+  app
+}))(Login);
 
 const Wrapp = styled.div`
   height: 100vh;

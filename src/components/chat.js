@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
 
-import { firebaseAuth, firebaseApp, database } from "../firebase-config";
+import { firebaseAuth, database } from "../firebase-config";
 
 class Chat extends React.Component {
   state = { roomName: "" };
@@ -92,9 +92,6 @@ class Chat extends React.Component {
     const { info = {}, isLogin } = this.props.app;
     const { roomName } = this.state;
     const { userName, photoUrl } = info;
-    if (!isLogin) {
-      return (window.location.href = "#");
-    }
 
     return (
       <Wrapper>

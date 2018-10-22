@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 
-import { HashRouter, Route } from "react-router-dom";
+import { HashRouter, Route, Redirect } from "react-router-dom";
 import { connect } from "react-redux";
 
-import { firebaseAuth, firebaseApp } from "./firebase-config";
+import { firebaseAuth } from "./firebase-config";
 import Login from "./components/login";
 import Chat from "./components/chat";
 
@@ -15,7 +15,7 @@ class App extends Component {
 
     firebaseAuth.onAuthStateChanged(user => {
       if (user) {
-        window.location.href = "#/chat";
+        // window.location.href = "#/chat";
         const currentUser = firebaseAuth.currentUser;
 
         if (!!currentUser) {
@@ -28,19 +28,20 @@ class App extends Component {
           );
         }
       } else {
-        window.location.href = "#";
+        // window.location.href = "#";
         dispatch(logoutAction());
-        console.log("log out");
+        // console.log("log out");
       }
     });
   }
 
   render() {
+    const { info = {}, isLogin } = this.props.app;
     return (
       <HashRouter>
         <div>
-          <Route exact path="/" component={Login} />
-          <Route path="/chat" component={Chat} />
+          <Route exact path="/login" component={Login} />
+          <PrivateRoute path="/" component={Chat} isAuthenticated={isLogin} />
         </div>
       </HashRouter>
     );
@@ -48,6 +49,23 @@ class App extends Component {
 }
 
 export default connect(
-  null,
+  ({ app }) => ({ app }),
   dispatch => ({ dispatch })
 )(App);
+
+const PrivateRoute = ({ component: Component, isAuthenticated, ...rest }) => (
+  <Route
+    {...rest}
+    render={props =>
+      isAuthenticated ? (
+        <Component {...props} />
+      ) : (
+        <Redirect
+          to={{
+            pathname: "/login"
+          }}
+        />
+      )
+    }
+  />
+);
