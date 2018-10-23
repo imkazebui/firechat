@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import ReactAvatar from "react-avatar";
 import moment from "moment";
 
-import { firebaseAuth, database } from "../firebase-config";
+import { firebaseAuth, database, firebaseStorage } from "../firebase-config";
 
 class Chat extends React.Component {
   state = {
@@ -18,14 +18,6 @@ class Chat extends React.Component {
   componentDidMount() {
     this.getListRoom();
   }
-
-  // componentDidUpdate() {
-  //   const { messages, activeChat } = this.state;
-
-  //   if (messages[activeChat] && messages[activeChat].length === 10) {
-  //     this.scrollToBottom();
-  //   }
-  // }
 
   changeRoomName = ({ target }) => this.setState({ roomName: target.value });
 
@@ -124,6 +116,10 @@ class Chat extends React.Component {
         userName,
         photoUrl
       });
+
+    database.ref(`rooms/${roomId}`).update({
+      lastMessageSent: message
+    });
   };
 
   updateRoomOfUser = roomId => {
@@ -180,31 +176,38 @@ class Chat extends React.Component {
     chatContentElement.scrollTop = chatContentElement.scrollHeight;
   };
 
+  callbackGetMessage = roomId => snapshot => {
+    const data = snapshot.val();
+
+    this.setState(
+      ({ messages }) => {
+        let newMessages = { ...messages };
+
+        if (newMessages.hasOwnProperty(roomId)) {
+          newMessages[roomId].push(data);
+        } else {
+          newMessages[roomId] = [data];
+        }
+
+        return {
+          messages: newMessages,
+          activeChat: roomId
+        };
+      },
+      () => this.scrollToBottom()
+    );
+  };
+
   getMessage = roomId => {
     database
       .ref(`messages/${roomId}`)
       .limitToLast(10)
-      .on("child_added", snapshot => {
-        const data = snapshot.val();
+      .on("child_added", this.callbackGetMessage(roomId));
 
-        this.setState(
-          ({ messages }) => {
-            let newMessages = { ...messages };
-
-            if (newMessages.hasOwnProperty(roomId)) {
-              newMessages[roomId].push(data);
-            } else {
-              newMessages[roomId] = [data];
-            }
-
-            return {
-              messages: newMessages,
-              activeChat: roomId
-            };
-          },
-          () => this.scrollToBottom()
-        );
-      });
+    database
+      .ref(`messages/${roomId}`)
+      .limitToLast(10)
+      .on("child_changed", this.callbackGetMessage(roomId));
   };
 
   onChangeMessage = ({ target }) => this.setState({ message: target.value });
@@ -232,6 +235,48 @@ class Chat extends React.Component {
     if (!messages.hasOwnProperty(roomId)) {
       this.getMessage(roomId);
     }
+  };
+
+  onChangeImage = ({ target }) => {
+    const file = target.files[0];
+    // 1 - We add a message with a loading icon that will get updated with the shared image.
+
+    const { uid, userName, photoUrl } = this.props.app.info;
+    const { activeChat } = this.state;
+
+    database
+      .ref(`messages/${activeChat}`)
+      .push({
+        sentBy: uid,
+        datetime: moment().unix(),
+        imageUrl: "https://www.google.com/images/spin-32.gif?a",
+        userName,
+        photoUrl
+      })
+      .then(function(messageRef) {
+        // 2 - Upload the image to Cloud Storage.
+        var filePath =
+          firebaseAuth.currentUser.uid + "/" + messageRef.key + "/" + file.name;
+        return firebaseStorage
+          .ref(filePath)
+          .put(file)
+          .then(function(fileSnapshot) {
+            // 3 - Generate a public URL for the file.
+            return fileSnapshot.ref.getDownloadURL().then(url => {
+              // 4 - Update the chat message placeholder with the image's URL.
+              return messageRef.update({
+                imageUrl: url,
+                storageUri: fileSnapshot.metadata.fullPath
+              });
+            });
+          });
+      })
+      .catch(function(error) {
+        console.error(
+          "There was an error uploading a file to Cloud Storage:",
+          error
+        );
+      });
   };
 
   render() {
@@ -297,17 +342,29 @@ class Chat extends React.Component {
               {listMessage.map(mess => {
                 if (mess.sentBy === uid) {
                   return (
-                    <WrappMyMessage>
-                      <Message>{mess.message}</Message>
+                    <WrappMyMessage key={message.datetime}>
+                      <Message>
+                        {mess.message ? (
+                          mess.message
+                        ) : (
+                          <img src={mess.imageUrl} alt="image" />
+                        )}
+                      </Message>
 
                       <Avatar src={mess.photoUrl} alt="avatar" />
                     </WrappMyMessage>
                   );
                 }
                 return (
-                  <WrappOtherMessage>
+                  <WrappOtherMessage key={message.datetime}>
                     <Avatar src={mess.photoUrl} alt="avatar" />
-                    <Message>{mess.message}</Message>
+                    <Message>
+                      {mess.message ? (
+                        mess.message
+                      ) : (
+                        <img src={mess.imageUrl} alt="image" />
+                      )}
+                    </Message>
                   </WrappOtherMessage>
                 );
               })}
@@ -320,7 +377,16 @@ class Chat extends React.Component {
                 onKeyPress={this.onEnterMessage}
               />
               <i className="fa fa-microphone" />
-              <i className="fa fa-id-card" />
+              <label htmlFor="input-image">
+                <input
+                  className="choose-image"
+                  id="input-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={this.onChangeImage}
+                />
+                <i className="fa fa-id-card" />
+              </label>
             </ChatFooter>
           </RightContent>
         </Body>
@@ -444,7 +510,7 @@ const ChatHeaderRight = styled.div`
 `;
 const ChatContent = styled.div`
   flex: 1;
-  padding: 0 20px;
+  padding: 20px 20px 0 20px;
   height: calc(100vh - 91.44px);
   overflow: auto;
 `;
@@ -466,6 +532,10 @@ const WrappOtherMessage = styled.div`
   div {
     background: #e0e0e0;
     color: #424242;
+
+    img {
+      width: 100%;
+    }
   }
 `;
 const WrappMyMessage = styled.div`
@@ -487,6 +557,10 @@ const WrappMyMessage = styled.div`
   div {
     background: #651fff;
     color: #fafafa;
+
+    img {
+      width: 100%;
+    }
   }
 `;
 const Message = styled.div`
@@ -509,5 +583,11 @@ const ChatFooter = styled.div`
 
   i {
     margin-left: 15px;
+  }
+
+  .choose-image {
+    visibility: hidden;
+    position: absolute;
+    left: 0;
   }
 `;
