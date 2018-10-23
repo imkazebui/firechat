@@ -19,6 +19,14 @@ class Chat extends React.Component {
     this.getListRoom();
   }
 
+  // componentDidUpdate() {
+  //   const { messages, activeChat } = this.state;
+
+  //   if (messages[activeChat] && messages[activeChat].length === 10) {
+  //     this.scrollToBottom();
+  //   }
+  // }
+
   changeRoomName = ({ target }) => this.setState({ roomName: target.value });
 
   signOut = () => firebaseAuth.signOut();
@@ -166,6 +174,12 @@ class Chat extends React.Component {
       });
   };
 
+  scrollToBottom = () => {
+    const chatContentElement = document.getElementById("chat-content");
+
+    chatContentElement.scrollTop = chatContentElement.scrollHeight;
+  };
+
   getMessage = roomId => {
     database
       .ref(`messages/${roomId}`)
@@ -173,27 +187,24 @@ class Chat extends React.Component {
       .on("child_added", snapshot => {
         const data = snapshot.val();
 
-        this.setState(({ messages }) => {
-          let newMessages = { ...messages };
+        this.setState(
+          ({ messages }) => {
+            let newMessages = { ...messages };
 
-          if (newMessages.hasOwnProperty(roomId)) {
-            newMessages[roomId].push(data);
-          } else {
-            newMessages[roomId] = [data];
-          }
+            if (newMessages.hasOwnProperty(roomId)) {
+              newMessages[roomId].push(data);
+            } else {
+              newMessages[roomId] = [data];
+            }
 
-          return {
-            messages: newMessages,
-            activeChat: roomId
-          };
-        });
+            return {
+              messages: newMessages,
+              activeChat: roomId
+            };
+          },
+          () => this.scrollToBottom()
+        );
       });
-  };
-
-  scrollToBottom = () => {
-    const chatContentElement = document.getElementById("chat-content");
-
-    chatContentElement.scrollTop = chatContentElement.scrollHeight;
   };
 
   onChangeMessage = ({ target }) => this.setState({ message: target.value });
