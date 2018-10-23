@@ -11,7 +11,7 @@ class Chat extends React.Component {
     roomName: "",
     listRoom: [],
     activeChat: 0,
-    messages: [],
+    messages: {},
     message: ""
   };
 
@@ -26,6 +26,10 @@ class Chat extends React.Component {
   createRoom = e => {
     const { roomName } = this.state;
     const { uid, userName, photoUrl } = this.props.app.info;
+
+    if (!roomName) {
+      return;
+    }
 
     database
       .ref("rooms")
@@ -67,6 +71,17 @@ class Chat extends React.Component {
           });
         } else {
           const dt = Object.entries(data)[0][1];
+
+          this.setState(({ listRoom }) => {
+            let newListRoom = Array.from(listRoom);
+            newListRoom.unshift(dt);
+            return {
+              activeChat: dt.id,
+              listRoom: newListRoom
+            };
+          });
+
+          this.getMessage(dt.id);
 
           if (
             Object.keys(dt.members).filter(userId => userId === uid).length ===
@@ -155,13 +170,30 @@ class Chat extends React.Component {
     database
       .ref(`messages/${roomId}`)
       .limitToLast(10)
-      .once("value", snapshot => {
+      .on("child_added", snapshot => {
         const data = snapshot.val();
-        this.setState({
-          messages: Object.values(data),
-          activeChat: roomId
+
+        this.setState(({ messages }) => {
+          let newMessages = { ...messages };
+
+          if (newMessages.hasOwnProperty(roomId)) {
+            newMessages[roomId].push(data);
+          } else {
+            newMessages[roomId] = [data];
+          }
+
+          return {
+            messages: newMessages,
+            activeChat: roomId
+          };
         });
       });
+  };
+
+  scrollToBottom = () => {
+    const chatContentElement = document.getElementById("chat-content");
+
+    chatContentElement.scrollTop = chatContentElement.scrollHeight;
   };
 
   onChangeMessage = ({ target }) => this.setState({ message: target.value });
@@ -176,10 +208,27 @@ class Chat extends React.Component {
     }
   };
 
+  onEnterRoomName = ({ key }) => {
+    if (key === "Enter") {
+      this.createRoom();
+    }
+  };
+
+  setActiveChat = roomId => () => {
+    const { messages } = this.state;
+    this.setState({ activeChat: roomId });
+
+    if (!messages.hasOwnProperty(roomId)) {
+      this.getMessage(roomId);
+    }
+  };
+
   render() {
     const { info = {}, isLogin } = this.props.app;
     const { roomName, listRoom, activeChat, messages, message } = this.state;
-    const { userName, photoUrl } = info;
+    const { userName, photoUrl, uid } = info;
+    const listMessage = messages[activeChat] || [];
+
     return (
       <Wrapper>
         <Header>
@@ -201,12 +250,17 @@ class Chat extends React.Component {
                 placeholder="join a room"
                 value={roomName}
                 onChange={this.changeRoomName}
+                onKeyPress={this.onEnterRoomName}
               />
               <i className="fa fa-plus-circle " onClick={this.createRoom} />
             </WrappSearch>
             <ListConversation>
               {listRoom.map(room => (
-                <Conversation key={room.id} active={activeChat === room.id}>
+                <Conversation
+                  key={room.id}
+                  active={activeChat === room.id}
+                  onClick={this.setActiveChat(room.id)}
+                >
                   <ConversationAvatar>
                     <ReactAvatar name={room.name} size={50} round={true} />
                   </ConversationAvatar>
@@ -220,13 +274,7 @@ class Chat extends React.Component {
           </LeftContent>
           <RightContent>
             <ChatHeader>
-              <ChatHeaderLeft>
-                <Avatar
-                  src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-                  alt="avatar"
-                />
-                <p>Phuong Bui</p>
-              </ChatHeaderLeft>
+              <ChatHeaderLeft />
               <ChatHeaderRight>
                 <i className="fa fa-comment" />
 
@@ -234,22 +282,24 @@ class Chat extends React.Component {
                 <i className="fa fa-phone" />
               </ChatHeaderRight>
             </ChatHeader>
-            <ChatContent>
-              <WrappOtherMessage>
-                <Avatar
-                  src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-                  alt="avatar"
-                />
-                <Message>Hello baby</Message>
-              </WrappOtherMessage>
-              <WrappMyMessage>
-                <Message>Hello baby</Message>
+            <ChatContent id="chat-content">
+              {listMessage.map(mess => {
+                if (mess.sentBy === uid) {
+                  return (
+                    <WrappMyMessage>
+                      <Message>{mess.message}</Message>
 
-                <Avatar
-                  src="https://lh6.googleusercontent.com/-pGGttR63cbo/AAAAAAAAAAI/AAAAAAAAADY/3LJW1l1bV0s/photo.jpg"
-                  alt="avatar"
-                />
-              </WrappMyMessage>
+                      <Avatar src={mess.photoUrl} alt="avatar" />
+                    </WrappMyMessage>
+                  );
+                }
+                return (
+                  <WrappOtherMessage>
+                    <Avatar src={mess.photoUrl} alt="avatar" />
+                    <Message>{mess.message}</Message>
+                  </WrappOtherMessage>
+                );
+              })}
             </ChatContent>
             <ChatFooter>
               <Input
@@ -348,6 +398,9 @@ const Conversation = styled.div`
   padding: 0 20px;
   border-top: 1px solid red;
   background: ${({ active }) => (active ? "#A7FFEB" : "transparent")};
+  &:hover {
+    cursor: pointer;
+  }
 `;
 const ConversationAvatar = styled.div`
   margin-right: 15px;
@@ -381,9 +434,12 @@ const ChatHeaderRight = styled.div`
 const ChatContent = styled.div`
   flex: 1;
   padding: 0 20px;
+  height: calc(100vh - 91.44px);
+  overflow: auto;
 `;
 const WrappOtherMessage = styled.div`
   display: flex;
+  margin-bottom: 10px;
   div::before {
     position: absolute;
     content: "";
@@ -404,6 +460,7 @@ const WrappOtherMessage = styled.div`
 const WrappMyMessage = styled.div`
   display: flex;
   justify-content: flex-end;
+  margin-bottom: 10px;
   div::before {
     position: absolute;
     content: "";
