@@ -7,7 +7,13 @@ import moment from "moment";
 import { firebaseAuth, database } from "../firebase-config";
 
 class Chat extends React.Component {
-  state = { roomName: "", listRoom: [], activeChat: 0 };
+  state = {
+    roomName: "",
+    listRoom: [],
+    activeChat: 0,
+    messages: [],
+    message: ""
+  };
 
   componentDidMount() {
     this.getListRoom();
@@ -124,10 +130,7 @@ class Chat extends React.Component {
         const rooms = Object.keys(data);
 
         if (rooms[0]) {
-          this.setState({
-            messages: this.getMessage(rooms[0]),
-            activeChat: rooms[0]
-          });
+          this.getMessage(rooms[0]);
         }
 
         rooms.map(roomId => {
@@ -154,13 +157,28 @@ class Chat extends React.Component {
       .limitToLast(10)
       .once("value", snapshot => {
         const data = snapshot.val();
-        return Object.values(data);
+        this.setState({
+          messages: Object.values(data),
+          activeChat: roomId
+        });
       });
+  };
+
+  onChangeMessage = ({ target }) => this.setState({ message: target.value });
+
+  onEnterMessage = ({ key }) => {
+    const { roomName, listRoom, activeChat, messages, message } = this.state;
+
+    if (key === "Enter" && message !== "") {
+      this.sentMessage(activeChat, message);
+
+      this.setState({ message: "" });
+    }
   };
 
   render() {
     const { info = {}, isLogin } = this.props.app;
-    const { roomName, listRoom, activeChat } = this.state;
+    const { roomName, listRoom, activeChat, messages, message } = this.state;
     const { userName, photoUrl } = info;
     return (
       <Wrapper>
@@ -234,7 +252,12 @@ class Chat extends React.Component {
               </WrappMyMessage>
             </ChatContent>
             <ChatFooter>
-              <Input placeholder="Write a message" />
+              <Input
+                placeholder="Write a message"
+                value={message}
+                onChange={this.onChangeMessage}
+                onKeyPress={this.onEnterMessage}
+              />
               <i className="fa fa-microphone" />
               <i className="fa fa-id-card" />
             </ChatFooter>
@@ -307,7 +330,7 @@ const WrappSearch = styled.div`
 const Input = styled.input`
   font-size: 18px;
   border: none;
-  color: #e3e3e3;
+  color: #999;
   margin: 0 10px;
   flex: 1;
 
