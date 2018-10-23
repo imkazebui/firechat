@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { connect } from "react-redux";
 import ReactAvatar from "react-avatar";
+import moment from "moment";
 
 import { firebaseAuth, database } from "../firebase-config";
 
@@ -18,7 +19,7 @@ class Chat extends React.Component {
 
   createRoom = e => {
     const { roomName } = this.state;
-    const { uid } = this.props.app.info;
+    const { uid, userName, photoUrl } = this.props.app.info;
 
     database
       .ref("rooms")
@@ -33,18 +34,31 @@ class Chat extends React.Component {
             .child("rooms")
             .push().key;
 
+          const roomData = {
+            id: newRoomId,
+            members: { [uid]: uid },
+            name: roomName,
+            lastMessageSent: "beginning of chat"
+          };
+
           let updates = {
-            [`/${newRoomId}`]: {
-              id: newRoomId,
-              members: { [uid]: uid },
-              name: roomName,
-              lastMessageSent: ""
-            }
+            [`/${newRoomId}`]: roomData
           };
 
           database.ref("/rooms").update(updates);
 
+          this.sentMessage(newRoomId, "beginning of chat");
+
           this.updateRoomOfUser(newRoomId);
+
+          this.setState(({ listRoom }) => {
+            let newListRoom = Array.from(listRoom);
+            newListRoom.unshift(roomData);
+            return {
+              activeChat: newRoomId,
+              listRoom: newListRoom
+            };
+          });
         } else {
           const dt = Object.entries(data)[0][1];
 
@@ -68,6 +82,21 @@ class Chat extends React.Component {
       });
   };
 
+  sentMessage = (roomId, message) => {
+    const { uid, userName, photoUrl } = this.props.app.info;
+
+    database
+      .ref(`messages/${roomId}`)
+      .push()
+      .set({
+        sentBy: uid,
+        datetime: moment().unix(),
+        message: message,
+        userName,
+        photoUrl
+      });
+  };
+
   updateRoomOfUser = roomId => {
     const { uid } = this.props.app.info;
 
@@ -88,7 +117,20 @@ class Chat extends React.Component {
       .once("value", dt => {
         const data = dt.val();
 
-        Object.keys(data).map(roomId => {
+        if (!data) {
+          return;
+        }
+
+        const rooms = Object.keys(data);
+
+        if (rooms[0]) {
+          this.setState({
+            messages: this.getMessage(rooms[0]),
+            activeChat: rooms[0]
+          });
+        }
+
+        rooms.map(roomId => {
           database
             .ref("rooms")
             .orderByChild("id")
@@ -103,6 +145,16 @@ class Chat extends React.Component {
               }
             });
         });
+      });
+  };
+
+  getMessage = roomId => {
+    database
+      .ref(`messages/${roomId}`)
+      .limitToLast(10)
+      .once("value", snapshot => {
+        const data = snapshot.val();
+        return Object.values(data);
       });
   };
 
@@ -135,8 +187,8 @@ class Chat extends React.Component {
               <i className="fa fa-plus-circle " onClick={this.createRoom} />
             </WrappSearch>
             <ListConversation>
-              {listRoom.map((room, index) => (
-                <Conversation key={room.id} active={activeChat === index}>
+              {listRoom.map(room => (
+                <Conversation key={room.id} active={activeChat === room.id}>
                   <ConversationAvatar>
                     <ReactAvatar name={room.name} size={50} round={true} />
                   </ConversationAvatar>
