@@ -354,19 +354,20 @@ class Chat extends React.Component {
                       <Avatar src={mess.photoUrl} alt="avatar" />
                     </WrappMyMessage>
                   );
+                } else {
+                  return (
+                    <WrappOtherMessage key={message.datetime}>
+                      <Avatar src={mess.photoUrl} alt="avatar" />
+                      <Message>
+                        {mess.message ? (
+                          mess.message
+                        ) : (
+                          <img src={mess.imageUrl} alt="image" />
+                        )}
+                      </Message>
+                    </WrappOtherMessage>
+                  );
                 }
-                return (
-                  <WrappOtherMessage key={message.datetime}>
-                    <Avatar src={mess.photoUrl} alt="avatar" />
-                    <Message>
-                      {mess.message ? (
-                        mess.message
-                      ) : (
-                        <img src={mess.imageUrl} alt="image" />
-                      )}
-                    </Message>
-                  </WrappOtherMessage>
-                );
               })}
             </ChatContent>
             <ChatFooter>

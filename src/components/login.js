@@ -43,19 +43,20 @@ class Login extends React.Component {
     return (
       <Wrapp>
         <Content>
-          <p>FireChat</p>
+          <h1 className="center">FireChat</h1>
           <FCButton text="Login with Facebook" background="#2962FF" fullWidth />
           <FCButton
             text="Login with Google"
             fullWidth
             onClick={this.authWithGG}
           />
-          <p>Or</p>
+          <p className="center">Or</p>
           <FCInput icon="fa fa-user-circle" placeholder="Username" />
           <FCInput icon="fa fa-unlock" placeholder="Password" />
+          <br />
           <FCButton text="Login " background="#1DE9B6" fullWidth />
-          <p>Create an account</p>
-          <p>Forgot password</p>
+
+          <p>Note: You can only login by Google account</p>
         </Content>
       </Wrapp>
     );
@@ -80,6 +81,10 @@ const Content = styled.div`
   border: 1px solid #bfbfbf;
   background: white;
   box-shadow: 0px 0px 10px 5px #aaaaaa;
+
+  .center {
+    text-align: center;
+  }
 `;
 
 function FCButton({
@@ -97,6 +102,7 @@ function FCButton({
 
 const WrappButton = styled.div`
   display: flex;
+  margin-bottom: 10px;
 
   div {
     padding: 5px 20px;
@@ -121,10 +127,13 @@ function FCInput({ icon, ...inputData }) {
 
 const WrappInput = styled.div`
   display: flex;
+  margin-bottom: 10px;
   div {
+    width: 100%;
+
     input {
       margin-left: 05px;
-
+      font-size: 16px;
       border: none;
     }
     padding: 5px 0;
